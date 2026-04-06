@@ -1,0 +1,32 @@
+=== ARTEMIS FIELD SESSION METADATA ===
+timestamp              : 2026-04-06 10:35:47
+session_id             : itb_telkomsel_20260406_103547
+location_name          : itb
+category               : urban_dense
+gps_coord              : -6.890765,107.609315
+elevation_m            : 775
+operator               : telkomsel
+rsrp_dbm               : -73
+lte_band               : B3
+enb_id                 : 893485
+weather                : cerah
+signal_bars            : 4
+raspi_hostname         : artemis-5
+raspi_os               : Debian GNU/Linux 13 (trixie)
+
+=== ARSITEKTUR SERVER ===
+vps_relay_ip           : 10.99.0.1
+homeserver_gpu_ip      : 10.99.0.2
+infra_note             : Raspi → VPS relay → Homeserver GPU backend
+
+=== BASELINE LAB (terkontrol) ===
+baseline_vps_avg_ms    : 21.44
+baseline_home_avg_ms   : 41.13
+baseline_vps_relay_ms  : 19.69
+
+=== SESSION CONFIG ===
+phase1_network_meas    : ping 500x, mtr 200 cycles, iperf3 60s up+down, burst 200x
+phase2_system_eval     : run_edge.py methods=all mode=sequences
+
+=== POST-SESSION INFO ===
+phase2_completed   : 2026-04-06 12:20:27

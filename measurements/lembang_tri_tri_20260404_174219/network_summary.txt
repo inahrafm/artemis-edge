@@ -1,0 +1,8 @@
+=== NETWORK MEASUREMENT SUMMARY ===
+session_id      : lembang_tri_tri_20260404_174219
+timestamp       : 2026-04-04 18:04:40
+rtt_vps_avg_ms  : 135.616
+rtt_home_avg_ms : 244.244
+burst_avg_ms    : 1607.401
+baseline_vps    : 21.44 ms
+baseline_home   : 41.13 ms

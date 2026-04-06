@@ -1,0 +1,29 @@
+=== ARTEMIS FIELD SESSION METADATA ===
+timestamp              : 2026-04-04 05:53:02
+session_id             : lembang_tri_20260404_055302
+location_name          : lembang
+category               : suburban_baseline
+gps_coord              : -6.824665846156288, 107.64178223288444
+elevation_m            : 1213
+operator               : tri
+rsrp_dbm               : -99
+lte_band               : B1
+enb_id                 : 403084
+weather                : cerah
+signal_bars            : 2
+raspi_hostname         : artemis-5
+raspi_os               : Debian GNU/Linux 13 (trixie)
+
+=== ARSITEKTUR SERVER ===
+vps_relay_ip           : 10.99.0.1
+homeserver_gpu_ip      : 10.99.0.2
+infra_note             : Raspi → VPS relay → Homeserver GPU backend
+
+=== BASELINE LAB (terkontrol) ===
+baseline_vps_avg_ms    : 21.44
+baseline_home_avg_ms   : 41.13
+baseline_vps_relay_ms  : 19.69
+
+=== SESSION CONFIG ===
+phase1_network_meas    : ping 500x, mtr 200 cycles, iperf3 60s up+down, burst 200x
+phase2_system_eval     : run_edge.py methods=all mode=sequences

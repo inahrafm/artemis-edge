@@ -1,0 +1,14 @@
+# config/pi4b_vps.yaml — VPS simulasi Raspberry Pi 4B
+# tc-netem diinjeksikan via simulate_node.py sebelum run
+node_id: pi4b_vps_sim
+device_type: pi4b
+model_edge: models/best_float32.tflite
+model_type: tflite
+model_de: models/lightgbm_de_v2.pkl
+server_url: http://HOMESERVER_IP:8000   # ganti dengan IP homeserver langsung
+images_dir: data/full_test/images
+sequences: sequences/sequence_list_v2.json
+thresholds: thresholds_v2.json
+request_timeout: 20
+forced_offload_interval: 50
+output_dir: results

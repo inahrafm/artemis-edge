@@ -1,0 +1,13 @@
+# config/pi3.yaml — Konfigurasi Raspberry Pi 3
+node_id: pi3_real
+device_type: pi3
+model_edge: models/best.onnx
+model_type: onnx
+model_de: models/lightgbm_de_v2.pkl
+server_url: http://10.99.0.2:8000
+images_dir: data/full_test/images
+sequences: sequences/sequence_list_v2.json
+thresholds: thresholds_v2.json
+request_timeout: 30
+forced_offload_interval: 50
+output_dir: results

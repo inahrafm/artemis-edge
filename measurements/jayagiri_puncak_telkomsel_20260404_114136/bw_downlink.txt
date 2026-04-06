@@ -1,0 +1,16 @@
+Connecting to host 10.99.0.2, port 5201
+Reverse mode, remote host 10.99.0.2 is sending
+[  5] local 10.99.0.3 port 48908 connected to 10.99.0.2 port 5201
+[ ID] Interval           Transfer     Bitrate
+[  5]   0.00-10.01  sec   768 KBytes   629 Kbits/sec                  
+[  5]  10.01-20.01  sec   896 KBytes   734 Kbits/sec                  
+[  5]  20.01-30.01  sec  1.12 MBytes   944 Kbits/sec                  
+[  5]  30.01-40.01  sec   768 KBytes   629 Kbits/sec                  
+[  5]  40.01-50.01  sec  1.38 MBytes  1.15 Mbits/sec                  
+[  5]  50.01-60.01  sec  1.62 MBytes  1.36 Mbits/sec                  
+- - - - - - - - - - - - - - - - - - - - - - - - -
+[ ID] Interval           Transfer     Bitrate         Retr
+[  5]   0.00-60.42  sec  6.75 MBytes   937 Kbits/sec  256            sender
+[  5]   0.00-60.01  sec  6.50 MBytes   909 Kbits/sec                  receiver
+
+iperf Done.
