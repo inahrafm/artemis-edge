@@ -1,42 +1,16 @@
-# Data besar — tidak di-push ke GitHub
-data/full_test/images/
-measurements/*/ping_homeserver.txt
-measurements/*/ping_vps.txt
-models/best_float32.tflite
-models/best.onnx
-models/best.pt
-
-# Results JSON — besar, simpan di server bukan GitHub
-results/*.json
-
-# Python
 __pycache__/
 *.pyc
-*.pyo
-*.egg-info/
-.eggs/
-dist/
-build/
-
-# Virtual environment
-artemis-env/
-venv/
-.venv/
-
-# Temporary / checkpoint
-results/*_CHECKPOINT_*.json
-results/*.tmp
-measurements/*.tmp
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
+*.pt
+*.onnx
+*.tflite
+*.pkl
+models/
+results/
+measurements/
+measurements_backup/
 logs/
-
-# Test artifacts
-results/test_*.json
-results/test_cp_*.json
-sequences/test_mini.json
+data/
+sequences/
+venv/
+artemis-env/
+*.zip

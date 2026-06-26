@@ -1,4 +1,4 @@
-# ARTEMIS v2 — Edge Node
+# ARTEMIS — Edge Node
 
 Sistem deteksi kebakaran berbasis kamera untuk perangkat edge (Raspberry Pi). Frame diproses secara lokal menggunakan model ringan, lalu diteruskan ke server inferensi jika diperlukan berdasarkan keputusan adaptive routing.
 
