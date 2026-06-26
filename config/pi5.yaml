@@ -4,8 +4,7 @@ device_type: pi5
 model_edge: models/best_float32.tflite
 model_type: tflite
 model_de: models/lightgbm_de_v2.pkl
-#server_url: http://10.99.0.2:8000
-server_url: http://10.99.0.2:8000
+server_url: http://YOUR_SERVER_IP:8000
 images_dir: data/full_test/images
 sequences: sequences/sequence_list_v2.json
 thresholds: thresholds_v2.json
