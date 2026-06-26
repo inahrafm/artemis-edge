@@ -14,3 +14,8 @@ sequences/
 venv/
 artemis-env/
 *.zip
+server/
+burst_latency.py
+field_session.sh
+field_test_artemis.sh
+run_service.py
