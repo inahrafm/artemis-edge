@@ -1,6 +1,7 @@
-# ARTEMIS — Edge Node
+# ARTEMIS — Edge Demo
 
-Sistem deteksi kebakaran berbasis kamera untuk perangkat edge (Raspberry Pi). Frame diproses secara lokal menggunakan model ringan, lalu diteruskan ke server inferensi jika diperlukan berdasarkan keputusan adaptive routing.
+Sistem deteksi kebakaran berbasis kamera untuk perangkat edge (Raspberry Pi).
+Inferensi dijalankan secara lokal, adaptif, atau diteruskan ke server — bisa dari video file, webcam, atau RTSP stream.
 
 ## Persyaratan
 
@@ -33,17 +34,12 @@ curl https://model.weartemis.me/lightgbm_de_v2.pkl -o models/lightgbm_de_v2.pkl
 
 ## Konfigurasi
 
-Edit file config sesuai perangkat yang digunakan:
+Edit file config sesuai perangkat:
 
 ```bash
-# Pi 5
-nano config/pi5.yaml
-
-# Pi 4B
-nano config/pi4b.yaml
-
-# Pi 3
-nano config/pi3.yaml
+nano config/pi5.yaml   # Pi 5
+nano config/pi4b.yaml  # Pi 4B
+nano config/pi3.yaml   # Pi 3
 ```
 
 Ganti `YOUR_SERVER_IP` dengan IP server inferensi ARTEMIS:
@@ -52,34 +48,34 @@ Ganti `YOUR_SERVER_IP` dengan IP server inferensi ARTEMIS:
 server_url: http://YOUR_SERVER_IP:8000
 ```
 
-## Menjalankan
+## Menjalankan Demo
 
-Sistem mendeteksi tipe perangkat secara otomatis — tidak perlu menentukan config secara manual.
+Sistem mendeteksi tipe perangkat secara otomatis.
 
 ```bash
-PYTHONPATH=/home/pi/artemis-edge python3 scripts/run_edge.py \
-    --location nama_lokasi \
-    --experiment_id id_eksperimen \
-    --methods server_only
+# Video file — tampilkan overlay di layar
+python3 scripts/run_demo.py --source video3.mp4 --method server_only --show
+
+# Webcam
+python3 scripts/run_demo.py --source 0 --method adaptive --show
+
+# RTSP stream — kirim alarm ke dashboard
+python3 scripts/run_demo.py --source rtsp://192.168.1.100/stream --method server_only --send_alarm
+
+# Tanpa tampilan, alarm saja
+python3 scripts/run_demo.py --source video3.mp4 --method server_only --send_alarm
 ```
 
-Pilihan `--methods`:
+Pilihan `--method`:
+
 - `server_only` — semua frame dikirim ke server
-- `adaptive` — routing otomatis LOCAL/OFFLOAD/DROP
-- `device_only` — inferensi lokal saja
-- `static_cooperative` — threshold statis
-
-## Verifikasi Server
-
-Pastikan server inferensi aktif sebelum menjalankan edge:
-
-```bash
-curl http://YOUR_SERVER_IP:8000/health
-```
+- `adaptive` — routing otomatis LOCAL/OFFLOAD/DROP berdasarkan decision engine
+- `device_only` — inferensi lokal saja, tanpa server
 
 ## Auto-Configuration
 
 Saat pertama dijalankan, sistem otomatis:
+
 1. Mendeteksi tipe Raspberry Pi dari hardware (`/proc/device-tree/model`)
 2. Memuat config dan format model yang optimal per perangkat:
    - Pi 3 → ONNX FP32
