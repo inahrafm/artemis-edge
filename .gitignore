@@ -1,21 +1,52 @@
+# Python
 __pycache__/
 *.pyc
+
+# Model weights — download terpisah
 *.pt
 *.onnx
 *.tflite
 *.pkl
 models/
+
+# Output eksperimen
 results/
 measurements/
 measurements_backup/
+
+# Data & logs
 logs/
 data/
 sequences/
+
+# Video
+video.mp4
+video2.mp4
+
+# Virtual environment
 venv/
 artemis-env/
+
+# Archive
 *.zip
+
+# Server (deploy terpisah)
 server/
+
+# Script yang tidak dipakai run_demo
 burst_latency.py
 field_session.sh
 field_test_artemis.sh
 run_service.py
+scripts/run_edge.py
+scripts/run_experiment.py
+scripts/run_server.py
+scripts/phase_f_pi_evaluation.py
+scripts/quick_latency_check.py
+
+# Edge modules yang tidak dipakai run_demo
+edge/node.py
+edge/notifier.py
+
+# Backup
+backup/

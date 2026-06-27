@@ -28,7 +28,15 @@ class EdgeInference:
     YOLO26n inference wrapper untuk edge device.
 
     Mendukung ONNX (Pi3) dan TFLite (Pi4B, Pi5).
-    Setiap call ke infer() menghasilkan detections + breakdown latensi.
+    Setiap call ke infer() atau infer_with_boxes() menghasilkan
+    detections + breakdown latensi.
+
+    Pipeline preprocessing dan inference dipakai bersama:
+
+        _read_image() → _preprocess() → _forward()
+                                               ↓
+                                   infer()  →  _parse()
+                             infer_with_boxes()  →  _parse_with_boxes()
     """
 
     def __init__(self, model_path: str, model_type: str):
@@ -68,6 +76,7 @@ class EdgeInference:
     def infer(self, image_path: str) -> Tuple[List[Dict], Dict]:
         """
         Jalankan inference dengan breakdown latensi lengkap.
+        Return detections tanpa koordinat box.
 
         Args:
             image_path: path ke file gambar JPEG
@@ -80,7 +89,7 @@ class EdgeInference:
                 "disk_read_ms":      float,
                 "preprocess_ms":     float,
                 "edge_inference_ms": float,
-                "edge_total_ms":     float,   # preprocess + inference
+                "edge_total_ms":     float,
             }
         """
         raw,    disk_ms = self._read_image(image_path)
@@ -88,18 +97,44 @@ class EdgeInference:
         output, inf_ms  = self._forward(inp)
         dets            = self._parse(output)
 
-        return dets, {
-            "disk_read_ms":      round(disk_ms, 3),
-            "preprocess_ms":     round(pre_ms,  3),
-            "edge_inference_ms": round(inf_ms,  3),
-            "edge_total_ms":     round(pre_ms + inf_ms, 3),
-        }
+        return dets, self._build_latency(disk_ms, pre_ms, inf_ms)
+
+    def infer_with_boxes(self, image_path: str) -> Tuple[List[Dict], Dict]:
+        """
+        Jalankan inference dengan breakdown latensi lengkap.
+        Return detections dengan koordinat bounding box (normalized 0–1).
+
+        Args:
+            image_path: path ke file gambar JPEG
+
+        Returns:
+            (detections, latency_breakdown)
+
+            detections: list of {
+                "class_id":   int,
+                "confidence": float,
+                "x1": float, "y1": float,
+                "x2": float, "y2": float,
+            }
+            latency_breakdown: {
+                "disk_read_ms":      float,
+                "preprocess_ms":     float,
+                "edge_inference_ms": float,
+                "edge_total_ms":     float,
+            }
+        """
+        raw,    disk_ms = self._read_image(image_path)
+        inp,    pre_ms  = self._preprocess(raw)
+        output, inf_ms  = self._forward(inp)
+        dets            = self._parse_with_boxes(output)
+
+        return dets, self._build_latency(disk_ms, pre_ms, inf_ms)
 
     def read_raw(self, image_path: str) -> Tuple[bytes, float]:
         """Baca file dari disk saja (untuk server_only yang tidak butuh inference)."""
         return self._read_image(image_path)
 
-    # ── Internal helpers ──────────────────────────────────────────────────────
+    # ── Internal pipeline ─────────────────────────────────────────────────────
 
     def _read_image(self, image_path: str) -> Tuple[bytes, float]:
         t0 = time.perf_counter()
@@ -114,7 +149,7 @@ class EdgeInference:
         arr = np.array(img, dtype=np.float32) / 255.0
 
         if self.model_type == "tflite":
-            out = arr[np.newaxis, ...]                    # (1, H, W, C)
+            out = arr[np.newaxis, ...]                      # (1, H, W, C)
         else:
             out = arr.transpose(2, 0, 1)[np.newaxis, ...]  # (1, C, H, W)
 
@@ -137,16 +172,60 @@ class EdgeInference:
         return output, (time.perf_counter() - t0) * 1000
 
     @staticmethod
-    def _parse(output: np.ndarray, conf_th: float = 0.01) -> List[Dict]:
+    def _build_latency(disk_ms: float, pre_ms: float, inf_ms: float) -> Dict:
+        return {
+            "disk_read_ms":      round(disk_ms, 3),
+            "preprocess_ms":     round(pre_ms,  3),
+            "edge_inference_ms": round(inf_ms,  3),
+            "edge_total_ms":     round(pre_ms + inf_ms, 3),
+        }
+
+    # ── Parsers ───────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _parse(output: np.ndarray, conf_th: float = 0.001) -> List[Dict]:
+        """
+        Parse raw YOLO output, tanpa koordinat box.
+        Format per deteksi: [x1, y1, x2, y2, confidence, class]
+        """
         pred = output[0]
-        if pred.ndim == 2:
+        if pred.shape[0] == 6:
             pred = pred.T
+
         results = []
-        n_cls = pred.shape[1] - 4
-        for anchor in pred:
-            scores = anchor[4:4 + n_cls]
-            cls_id = int(np.argmax(scores))
-            conf   = float(scores[cls_id])
+        for det in pred:
+            x1, y1, x2, y2, conf, cls = det
+            conf = float(conf)
+            cls  = int(cls)
             if conf >= conf_th:
-                results.append({"class_id": cls_id, "confidence": conf})
+                results.append({
+                    "class_id":   cls,
+                    "confidence": conf,
+                })
+        return results
+
+    @staticmethod
+    def _parse_with_boxes(output: np.ndarray, conf_th: float = 0.001) -> List[Dict]:
+        """
+        Parse raw YOLO output, dengan koordinat bounding box (normalized 0–1).
+        Format per deteksi: [x1, y1, x2, y2, confidence, class]
+        """
+        pred = output[0]
+        if pred.shape[0] == 6:
+            pred = pred.T
+
+        results = []
+        for det in pred:
+            x1, y1, x2, y2, conf, cls = det
+            conf = float(conf)
+            cls  = int(cls)
+            if conf >= conf_th:
+                results.append({
+                    "class_id":   cls,
+                    "confidence": conf,
+                    "x1":         float(x1),
+                    "y1":         float(y1),
+                    "x2":         float(x2),
+                    "y2":         float(y2),
+                })
         return results
