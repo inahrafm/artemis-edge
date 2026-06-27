@@ -61,21 +61,43 @@ def setup_logging(level="INFO"):
 
 
 # ── Dashboard sender ──────────────────────────────────────────────────────────
+# HAPUS seluruh fungsi send_alarm() lama, ganti dengan ini:
 
-def send_alarm(alarm_url, node_id, alarm_type, location, inference_ms):
+def send_alarm(alarm_url, node_id, device_type, alarm_type, location,
+               method, routing_decision, inference_ms,
+               confmax_fire=0.0, confmax_smoke=0.0,
+               frame_idx=-1, seq_id="", experiment_id="",
+               frame_bgr=None, send_frame=False, frame_quality=60):
+    frame_b64 = None
+    if send_frame and frame_bgr is not None:
+        try:
+            ok, buf = cv2.imencode('.jpg', frame_bgr,
+                                   [int(cv2.IMWRITE_JPEG_QUALITY), frame_quality])
+            if ok:
+                frame_b64 = base64.b64encode(buf.tobytes()).decode('utf-8')
+        except Exception as e:
+            log.warning(f"Encode frame gagal: {e}")
     try:
         payload = {
-            "node_id": node_id,
-            "alarm_type": alarm_type,
-            "location": location,
-            "sent_at": time.time(),
-            "alarm_decision_ms": inference_ms,
+            "node_id":           node_id,
+            "device_type":       device_type,
+            "alarm_type":        alarm_type,
+            "location":          location,
+            "experiment_id":     experiment_id,
+            "method":            method,
+            "routing_decision":  routing_decision,
+            "alarm_decision_ms": round(inference_ms, 3),
+            "confmax_fire":      round(confmax_fire,  4),
+            "confmax_smoke":     round(confmax_smoke, 4),
+            "frame_idx":         frame_idx,
+            "seq_id":            seq_id,
+            "frame_b64":         frame_b64,
+            "sent_at":           time.time(),
         }
         resp = requests.post(alarm_url, json=payload, timeout=5)
-        log.info(f"Alarm sent [{alarm_type}] → {resp.status_code}")
+        log.info(f"Alarm sent [{alarm_type}] routing={routing_decision} → {resp.status_code}")
     except Exception as e:
         log.warning(f"Alarm gagal: {e}")
-
 
 def send_frame(frame_url, node_id, frame, decision, inference_ms):
     try:
@@ -344,12 +366,29 @@ def run_sequence_mode(args, cfg, inference, de, offloader):
                 )
 
                 if args.send_alarm and alarm != "NONE":
-                    notify_async(send_alarm,
-                                 alarm_url=args.alarm_url,
-                                 node_id=cfg.node_id,
-                                 alarm_type=alarm,
-                                 location=args.location,
-                                 inference_ms=total_ms)
+                    t = threading.Thread(
+                        target=send_alarm,
+                        kwargs=dict(
+                            alarm_url=args.alarm_url,
+                            node_id=cfg.node_id,
+                            device_type=cfg.device_type,
+                            alarm_type=alarm,
+                            location=args.location,
+                            method=args.method,
+                            routing_decision=result["decision"],
+                            inference_ms=inf_ms,
+                            confmax_fire=result["confmax_fire"],
+                            confmax_smoke=result["confmax_smoke"],
+                            frame_idx=global_frame_idx,
+                            seq_id=seq_id,
+                            experiment_id=getattr(args, "experiment_id", ""),
+                            frame_bgr=frame.copy() if args.send_frame else None,
+                            send_frame=args.send_frame,
+                        ),
+                        daemon=False,
+                    )
+                    t.start()
+                    alarm_threads.append(t)
 
                 if args.show:
                     display = draw_overlay(
@@ -402,6 +441,7 @@ def main():
                         help="Delay antar frame di sequence mode dalam ms (default: 100)")
     parser.add_argument("--log_level",  default="INFO")
     args = parser.parse_args()
+    alarm_threads = []
 
     setup_logging(args.log_level)
 
@@ -488,20 +528,29 @@ def main():
                     )
 
                     if args.send_alarm and alarm != "NONE":
-                        notify_async(send_alarm,
-                                     alarm_url=args.alarm_url,
-                                     node_id=cfg.node_id,
-                                     alarm_type=alarm,
-                                     location=args.location,
-                                     inference_ms=inf_ms)
-
-                    if args.send_frame:
-                        notify_async(send_frame,
-                                     frame_url=args.frame_url,
-                                     node_id=cfg.node_id,
-                                     frame=frame.copy(),
-                                     decision=alarm,
-                                     inference_ms=inf_ms)
+                        t = threading.Thread(
+                            target=send_alarm,
+                            kwargs=dict(
+                                alarm_url=args.alarm_url,
+                                node_id=cfg.node_id,
+                                device_type=cfg.device_type,
+                                alarm_type=alarm,
+                                location=args.location,
+                                method=args.method,
+                                routing_decision=result["decision"],
+                                inference_ms=inf_ms,
+                                confmax_fire=result["confmax_fire"],
+                                confmax_smoke=result["confmax_smoke"],
+                                frame_idx=global_frame_idx,
+                                seq_id=seq_id,
+                                experiment_id=getattr(args, "experiment_id", ""),
+                                frame_bgr=frame.copy() if args.send_frame else None,
+                                send_frame=args.send_frame,
+                            ),
+                            daemon=False,
+                        )
+                        t.start()
+                        alarm_threads.append(t)
 
                 except Exception as e:
                     log.warning(f"Inferensi gagal: {e}")
@@ -538,6 +587,11 @@ def main():
             cv2.destroyAllWindows()
         if offloader:
             offloader.close()
+        if alarm_threads:
+            log.info(f"Menunggu {len(alarm_threads)} alarm thread selesai...")
+            for t in alarm_threads:
+                t.join(timeout=5)
+            log.info("Semua alarm terkirim.")
 
 
 if __name__ == "__main__":
