@@ -190,7 +190,6 @@ def _validate_paths(cfg: EdgeNodeConfig):
     checks = {
         "model_edge": cfg.model_edge,
         "model_de":   cfg.model_de,
-        "images_dir": cfg.images_dir,
     }
     missing = [name for name, path in checks.items() if not Path(path).exists()]
     if missing:
