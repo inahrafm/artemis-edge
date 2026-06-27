@@ -72,6 +72,11 @@ Pilihan `--method`:
 - `adaptive` — routing otomatis LOCAL/OFFLOAD/DROP berdasarkan decision engine
 - `device_only` — inferensi lokal saja, tanpa server
 
+## Verifikasi Server
+Pastikan server inferensi aktif sebelum menjalankan edge:
+bash
+curl http://YOUR_SERVER_IP:8000/health
+
 ## Auto-Configuration
 
 Saat pertama dijalankan, sistem otomatis:
