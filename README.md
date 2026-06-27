@@ -74,8 +74,9 @@ Pilihan `--method`:
 
 ## Verifikasi Server
 Pastikan server inferensi aktif sebelum menjalankan edge:
-bash
+```bash
 curl http://YOUR_SERVER_IP:8000/health
+```
 
 ## Auto-Configuration
 
